@@ -1,43 +1,111 @@
 % Chapter 1
 
-\chapter{Introducción general} % Main chapter title
+\chapter{Introducción general}
 
-\label{Chapter1} % For referencing the chapter elsewhere, use \ref{Chapter1}
+\label{Chapter1}
 \label{IntroGeneral}
 
-En este capítulo se presenta el contexto y la motivación que dieron origen al trabajo, se describe el problema abordado, se enuncian los objetivos general y específicos, se delimita el alcance del proyecto y, finalmente, se detalla la organización de la memoria.
+En este capítulo se introduce el problema de la proyección de contrataciones a partir de información comercial histórica. Se presenta primero el rol que cumple el pronóstico de ventas en la planificación de una organización y luego se describe el contexto que motivó el trabajo. A continuación, se formula el problema técnico, se revisan los principales enfoques propuestos en la literatura y se establece la posición adoptada en el proyecto. Finalmente, se enuncian los objetivos, el alcance y la organización de la memoria.
 
 %----------------------------------------------------------------------------------------
 
-% Define some commands to keep the formatting separated from the content
-\newcommand{\keyword}[1]{\textbf{#1}}
-\newcommand{\tabhead}[1]{\textbf{#1}}
-\newcommand{\code}[1]{\texttt{#1}}
-\newcommand{\file}[1]{\texttt{\bfseries#1}}
-\newcommand{\option}[1]{\texttt{\itshape#1}}
-\newcommand{\grados}{$^{\circ}$}
+\section{Introducción general al tema}
+
+La proyección de ventas constituye un insumo central para la planificación financiera de una organización. A partir de ella se estiman ingresos, se asignan recursos, se definen metas y se anticipan necesidades de capacidad. En entornos empresariales, esta tarea suele combinar información histórica con el conocimiento de los responsables comerciales. Los sistemas de pronóstico brindan una base cuantitativa, mientras que las personas incorporan información contextual que no siempre se encuentra representada en los datos. La evidencia disponible muestra, sin embargo, que los ajustes basados en juicio experto no mejoran necesariamente la precisión y pueden introducir sesgos, en particular cuando son frecuentes, pequeños o excesivamente optimistas \citep{Fildes2009}.
+
+Los sistemas de gestión de relaciones con clientes o CRM (Customer Relationship Management) registran de manera estructurada la actividad comercial. Para cada oportunidad pueden almacenar su monto esperado, la probabilidad estimada de cierre, la etapa dentro del proceso de venta, la fecha prevista de concreción y otras características relevantes. Además de facilitar el seguimiento operativo, estos registros permiten reconstruir cómo evolucionó el pipeline comercial y ofrecen una fuente de datos para desarrollar pronósticos reproducibles.
+
+En mercados de empresa a empresa o B2B (business to business), el modelado presenta dificultades particulares. La cantidad de operaciones suele ser menor que en contextos de consumo masivo, los montos son heterogéneos y unas pocas oportunidades de gran tamaño pueden modificar de manera significativa el total de un período. También son frecuentes los cambios en las fechas esperadas de cierre y en las valoraciones subjetivas del equipo comercial. Trabajos anteriores demostraron que es posible utilizar aprendizaje automático para estimar la probabilidad de éxito de oportunidades B2B, aunque destacan como limitaciones el reducido número de transacciones, el ruido y la evolución del entorno de negocios \citep{Yan2015}. Otros estudios utilizaron información comercial anticipada para mejorar procesos manuales de pronóstico de ventas B2B \citep{Rohaan2022}.
+
+Este trabajo abordó una variante diferente y complementaria del problema. En lugar de estimar únicamente la probabilidad de éxito de cada oportunidad, se buscó proyectar el volumen agregado de contrataciones, es decir, el monto de ventas efectivamente comprometidas durante un horizonte futuro. La salida se diseñó para apoyar la planificación financiera trimestral y, por lo tanto, para poder compararse con el pronóstico que la organización utilizaba como referencia.
 
 %----------------------------------------------------------------------------------------
 
 \section{Contexto y motivación}
 
-OceanSound Partners es una firma de inversión que gestiona un portafolio de empresas. Una de las empresas de su portafolio administra su actividad comercial mediante un sistema de \textit{Customer Relationship Management} (CRM), en el cual registra la evolución de sus oportunidades de venta: montos esperados, probabilidades de cierre, etapas del embudo comercial y fechas estimadas de concreción.
+OceanSound Partners es una firma de inversión que gestiona un portafolio de empresas. Una de las empresas de ese portafolio administra su actividad comercial mediante un CRM, en el que registra la evolución de sus oportunidades de venta. La planificación financiera depende, en buena medida, de la proyección de las contrataciones futuras. Antes de este proyecto, esas proyecciones se elaboraban a partir del pronóstico almacenado en el CRM y de la evaluación manual del equipo comercial. El proceso dependía del criterio de las personas involucradas, era difícil de reproducir y no contaba con un procedimiento común para medir su error histórico.
 
-La planificación financiera de la organización depende, en buena medida, de la proyección de las contrataciones (es decir, las ventas efectivamente comprometidas en un período). Hasta el momento, esas proyecciones se elaboraban de manera manual, a partir de reportes históricos y de la estimación del equipo comercial. Ese enfoque presenta limitaciones conocidas: es subjetivo, depende del criterio de las personas involucradas, resulta difícil de reproducir y auditar, y su margen de error no se encuentra cuantificado. En consecuencia, los desvíos en la proyección se propagan al presupuesto anual y a las decisiones de asignación de recursos.
+El CRM conserva una fotografía semanal, denominada en adelante snapshot, del estado completo del pipeline. Una misma oportunidad aparece en sucesivos snapshots con la información disponible en cada fecha. Esta estructura permite estudiar no solo el resultado final de una venta, sino también la evolución de las variables que estaban disponibles antes de que ese resultado ocurriera.
 
-Al mismo tiempo, el CRM acumula de forma sistemática una fotografía semanal (de aquí en más, \textit{snapshot}) del estado completo del \textit{pipeline} comercial. Esta información histórica, disponible a lo largo de más de dos años, constituye una base de evidencia hasta ahora poco aprovechada. La motivación de este trabajo surge de esa oportunidad: reemplazar la estimación manual por un enfoque sistemático, basado en evidencia y respaldado por técnicas de aprendizaje automático, que permita generar proyecciones reproducibles y trazables.
+La frecuencia semanal brinda un registro detallado, pero no necesariamente coincide con el horizonte relevante para la decisión de negocio. Durante el desarrollo se comprobó que las contrataciones semanales presentaban una variabilidad elevada y que los errores de proyección disminuían al trabajar con períodos más agregados. En consecuencia, se seleccionó el primer snapshot disponible de cada mes como punto de observación y se definió como variable objetivo la suma de las contrataciones de los tres meses posteriores. De este modo, se mantuvo la información histórica de origen, pero se alineó la frecuencia de modelado con la planificación trimestral.
 
-El proyecto se inscribe además en el marco de la Carrera de Especialización en Inteligencia Artificial, en tanto aplica de manera integrada contenidos de la especialización, como el análisis y la preparación de datos, los modelos de aprendizaje automático, las series temporales y la evaluación de modelos, a un problema real de una organización.
+La motivación del trabajo surgió, por lo tanto, de dos oportunidades. Desde la perspectiva organizacional, se buscó disponer de un pronóstico cuantitativo, trazable y comparable con el método vigente. Desde la perspectiva académica, el problema permitió integrar preparación y análisis de datos, aprendizaje automático, series temporales, validación de modelos y gestión de experimentos sobre un caso real.
 
 %----------------------------------------------------------------------------------------
 
 \section{Descripción del problema}
 
-El insumo principal del trabajo son los \textit{snapshots} semanales exportados desde el CRM. Cada \textit{snapshot} contiene el estado de todas las oportunidades comerciales tal como se conocía en esa fecha, tanto las que permanecen abiertas como las ya cerradas. De este modo, una misma oportunidad aparece repetida a lo largo de sucesivos \textit{snapshots}, reflejando su evolución en el tiempo.
+El conjunto de datos tiene estructura de panel longitudinal: cada fila representa el estado de una oportunidad en una fecha de observación y una misma oportunidad se repite a lo largo de múltiples snapshots. Las contrataciones se determinan a partir de las oportunidades ganadas y de su fecha efectiva de cierre. Por esta razón, el conjunto utilizado para modelar no puede construirse mediante una agregación directa de todas las filas, ya que ello produciría duplicaciones y mezclaría estados conocidos en distintos momentos.
 
-Esta estructura de datos, de tipo panel longitudinal, plantea un desafío metodológico central: para que las proyecciones sean válidas, cada variable debe construirse utilizando únicamente la información disponible hasta la fecha del \textit{snapshot} correspondiente, evitando incorporar información del futuro. El incumplimiento de esta condición, conocido como \textit{data leakage}, produce métricas de desempeño artificialmente optimistas y modelos que no generalizan.
+El desafío metodológico principal consiste en respetar la disponibilidad temporal de la información. Para producir una proyección desde un instante $T$, las variables predictoras solo pueden utilizar datos que ya eran conocidos en ese instante. Incorporar el estado final de una oportunidad, su fecha de cierre efectiva o cualquier transformación calculada con observaciones posteriores constituiría una fuga de información o data leakage. Este problema produce métricas artificialmente optimistas y un modelo que no puede reproducir su desempeño cuando se utiliza sobre períodos futuros.
 
-El objetivo de negocio consiste en proyectar el volumen de contrataciones por período (con foco en la proyección trimestral, útil para la planificación financiera) a partir del estado del \textit{pipeline} comercial. El desafío técnico, por lo tanto, es doble: construir un proceso que respete la naturaleza temporal de los datos y, sobre esa base, obtener proyecciones cuyo error sea menor y más consistente que el del método manual vigente, que se adopta como referencia a superar.
+La construcción del conjunto supervisado requiere entonces tres operaciones fundamentales. Primero, se debe consolidar cada snapshot sin perder su condición point in time. Segundo, se debe construir el monto de contrataciones evitando contar una misma oportunidad más de una vez. Tercero, cada estado mensual del pipeline debe asociarse con las contrataciones acumuladas durante los tres meses siguientes. Los períodos más recientes necesitan, además, un tratamiento específico, porque algunas operaciones todavía no habían alcanzado su resultado definitivo al momento de extraer los datos; esta condición se denomina censura por la derecha.
+
+La evaluación también debe conservar el orden cronológico. Una partición aleatoria permitiría que observaciones futuras participaran en el entrenamiento de predicciones correspondientes al pasado. Para evitarlo, la selección de modelos se planteó mediante validación temporal de ventana expansiva o walk forward, en la que cada iteración entrena con la historia disponible y evalúa sobre un período posterior. La literatura señala que la evaluación de predictores temporales requiere procedimientos diferentes de la validación cruzada convencional, precisamente por la dependencia y la evolución temporal de los datos \citep{Bergmeir2012}.
+
+La métrica relativa principal es el error porcentual absoluto ponderado o WAPE (Weighted Absolute Percentage Error), definido por la ecuación~\ref{eq:wape}.
+
+\begin{equation}
+    \label{eq:wape}
+    \mathrm{WAPE} = 100\,\frac{\sum_{t=1}^{n}\left|y_t-\hat{y}_t\right|}
+    {\sum_{t=1}^{n}\left|y_t\right|},
+\end{equation}
+
+donde $y_t$ es el monto real y $\hat{y}_t$ es el monto proyectado para el período $t$. A diferencia del error porcentual absoluto medio o MAPE (Mean Absolute Percentage Error), el WAPE no divide cada error por una observación individual. Esto evita valores indefinidos cuando un período no registra contrataciones. Las limitaciones de las métricas porcentuales ante valores nulos o cercanos a cero se encuentran ampliamente documentadas \citep{HyndmanKoehler2006}. El WAPE se complementa con el error absoluto medio (MAE), la raíz del error cuadrático medio (RMSE) y el coeficiente de determinación ($R^2$), de modo de analizar tanto la magnitud como la distribución de los errores.
+
+%----------------------------------------------------------------------------------------
+
+\section{Estado del arte}
+
+El pronóstico de ventas puede abordarse mediante métodos estadísticos, modelos de aprendizaje automático, redes neuronales y estimaciones basadas en juicio experto. No existe un enfoque universalmente superior: el resultado depende de la cantidad de datos, su frecuencia, el horizonte de decisión, la estabilidad del proceso y la disponibilidad de variables explicativas.
+
+\subsection{Pronósticos estadísticos y basados en juicio experto}
+
+Los modelos autorregresivos integrados de media móvil o ARIMA (Autoregressive Integrated Moving Average) representan una referencia clásica para modelar autocorrelación, tendencia y estacionalidad \citep{BoxJenkins2015}. Su formulación resulta interpretable y puede ser efectiva cuando la estructura histórica de la serie es relativamente estable. Como limitación, un modelo puramente univariado no utiliza directamente el estado actual de las oportunidades comerciales.
+
+Prophet propone un modelo descomponible con tendencia, estacionalidades y eventos, acompañado por parámetros que pueden ser ajustados por un analista \citep{TaylorLetham2018}. Este enfoque fue diseñado para facilitar el pronóstico de numerosas series de negocio y ofrece una referencia intermedia entre la automatización y la intervención humana. Sin embargo, tanto Prophet como ARIMA necesitan una cantidad suficiente de observaciones para identificar patrones temporales de manera confiable.
+
+Los pronósticos basados en el criterio comercial incorporan conocimiento que puede no estar codificado en los datos, pero su desempeño depende de cómo se realicen los ajustes. Fildes et al. observaron que determinados ajustes mejoraban la precisión, mientras que otros la reducían y mostraban sesgo optimista \citep{Fildes2009}. Esto respalda la necesidad de medir el valor agregado por la intervención humana y de conservar el pronóstico del CRM como una referencia explícita, en lugar de asumir de antemano que el modelo automático será mejor.
+
+\subsection{Aprendizaje automático aplicado al pipeline comercial}
+
+Los métodos basados en árboles permiten combinar variables numéricas y categóricas, capturar relaciones no lineales y representar interacciones sin imponer una forma funcional única. Los bosques aleatorios o Random Forest reducen la varianza mediante la combinación de múltiples árboles construidos sobre muestras y subconjuntos aleatorios de variables \citep{Breiman2001}. XGBoost utiliza árboles agregados secuencialmente mediante gradient boosting e incorpora regularización y optimizaciones para datos dispersos \citep{ChenGuestrin2016}. Ambos enfoques resultan adecuados para construir un problema supervisado a partir de rezagos históricos y medidas agregadas del pipeline.
+
+Las redes recurrentes LSTM (Long Short Term Memory) fueron diseñadas para aprender dependencias de largo plazo mediante mecanismos de memoria y compuertas \citep{HochreiterSchmidhuber1997}. Su flexibilidad permite representar dinámicas temporales complejas, pero implica un número mayor de parámetros y una necesidad de datos que puede resultar desfavorable en series empresariales cortas. Por ese motivo, su inclusión en una comparación debe entenderse como una hipótesis a evaluar y no como una garantía de mejora.
+
+En el dominio B2B, Yan et al. propusieron modelos para estimar la probabilidad de éxito de oportunidades a partir de información del pipeline y señalaron explícitamente los problemas de escasez y ruido de los datos \citep{Yan2015}. Rohaan et al. mostraron que el aprendizaje supervisado puede aprovechar información comercial anticipada y superar un proceso manual en un caso real \citep{Rohaan2022}. Estos antecedentes respaldan el uso de variables disponibles antes del cierre, aunque el objetivo del presente trabajo es el monto agregado de contrataciones y no la clasificación individual de oportunidades.
+
+\subsection{Agregación temporal y evaluación}
+
+La agregación temporal transforma una serie de alta frecuencia en observaciones correspondientes a períodos más extensos. Esta operación actúa como un filtro que atenúa componentes de alta frecuencia y puede facilitar la identificación de tendencias y ciclos. Kourentzes et al. propusieron combinar información de múltiples niveles de agregación para mejorar la estimación de la estructura temporal \citep{Kourentzes2014}. Estudios posteriores mostraron que la agregación puede mejorar la precisión y reducir la incertidumbre de modelado en problemas de demanda, aunque también disminuye la cantidad de observaciones disponibles \citep{Kourentzes2017}.
+
+Este compromiso es especialmente relevante en el caso estudiado. La frecuencia semanal proporciona más puntos de entrenamiento, pero exhibe una variabilidad elevada; la frecuencia mensual reduce el ruido, aunque deja una muestra pequeña; y el horizonte trimestral coincide mejor con la decisión financiera. En consecuencia, la granularidad se consideró un componente del problema de modelado y fue evaluada empíricamente, en lugar de fijarse únicamente por la frecuencia de extracción del CRM.
+
+La tabla~\ref{tab:estadoArte} resume las familias de enfoques consideradas y su relación con el problema abordado.
+
+\begin{table}[ht]
+    \centering
+    \caption{Comparación de los principales enfoques de pronóstico considerados. Las ventajas y limitaciones se expresan para un pipeline B2B con una historia temporal reducida y montos heterogéneos.}
+    \label{tab:estadoArte}
+    \small
+    \begin{tabular}{p{2.7cm} p{4.5cm} p{5.6cm}}
+        \toprule
+        Enfoque & Ventajas & Limitaciones y relación con el trabajo \\
+        \midrule
+        Pronóstico del CRM y juicio experto & Incorpora conocimiento comercial y constituye la referencia utilizada por la organización. & Puede ser subjetivo, difícil de reproducir y susceptible a sesgos; se utiliza como línea de base de negocio \citep{Fildes2009}. \\
+        \addlinespace
+        ARIMA y Prophet & Representan tendencia y estacionalidad con modelos interpretables. & Aprovechan principalmente la historia de la serie y requieren suficientes períodos para estimar patrones estables \citep{BoxJenkins2015,TaylorLetham2018}. \\
+        \addlinespace
+        Random Forest y XGBoost & Capturan no linealidades e interacciones entre rezagos y variables agregadas del pipeline. & Pueden sobreajustarse cuando el número de períodos es pequeño; requieren validación temporal y control de complejidad \citep{Breiman2001,ChenGuestrin2016}. \\
+        \addlinespace
+        LSTM & Puede aprender dependencias temporales complejas sin especificarlas de forma manual. & Su mayor cantidad de parámetros puede ser inadecuada para una serie corta y ruidosa \citep{HochreiterSchmidhuber1997}. \\
+        \addlinespace
+        Agregación temporal & Reduce variaciones de alta frecuencia y alinea el pronóstico con el horizonte de decisión. & Suaviza la serie, pero reduce la cantidad de observaciones; el nivel debe validarse empíricamente \citep{Kourentzes2014,Kourentzes2017}. \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+El enfoque adoptado combinó elementos de estas líneas de trabajo. Se compararon métodos de referencia, modelos estadísticos, algoritmos basados en árboles y una red LSTM bajo un protocolo temporal común. El pronóstico del CRM se mantuvo como referencia de negocio. La contribución no residió en proponer un algoritmo nuevo, sino en construir un proceso reproducible que transformó estados históricos del pipeline en un problema de proyección trimestral, evitó el uso de información futura y permitió comparar familias de modelos con las mismas fechas y métricas.
 
 %----------------------------------------------------------------------------------------
 
@@ -45,35 +113,39 @@ El objetivo de negocio consiste en proyectar el volumen de contrataciones por pe
 
 \subsection{Objetivo general}
 
-Desarrollar un modelo de aprendizaje automático, junto con un \textit{pipeline} de datos reproducible, capaz de proyectar las contrataciones de la empresa a partir de los \textit{snapshots} históricos del CRM, con un desempeño superior al de la estimación manual utilizada hasta el momento.
+Desarrollar y evaluar un modelo de aprendizaje automático, integrado en un pipeline de datos reproducible, para proyectar las contrataciones del trimestre siguiente a partir del estado mensual histórico de un CRM, con corrección temporal y un desempeño medido frente al pronóstico utilizado por la organización.
 
 \subsection{Objetivos específicos}
 
 \begin{itemize}
-    \item Diseñar e implementar un \textit{pipeline} reproducible que abarque la ingesta, la validación de esquema, la limpieza y la consolidación de los \textit{snapshots} en un conjunto de datos apto para el modelado.
-    \item Definir la variable objetivo (contrataciones) y construir las variables predictoras respetando la corrección temporal (\textit{point-in-time}), de modo de evitar el \textit{data leakage}.
-    \item Comparar distintas familias de modelos (enfoques de regresión, modelos de series temporales y redes neuronales) bajo una metodología de validación temporal común y métricas de desempeño homogéneas.
-    \item Seleccionar y ajustar el modelo de mejor desempeño, y cuantificar la mejora obtenida respecto del método manual de referencia.
-    \item Generar proyecciones agregadas e interpretables que puedan ser utilizadas por el área de negocio en el proceso de planificación financiera.
+    \item Diseñar e implementar un pipeline reproducible para ingerir, validar, limpiar y consolidar los snapshots históricos del CRM.
+    \item Definir la variable objetivo de contrataciones y construir las variables predictoras con criterio point in time, de modo de evitar duplicaciones y fuga de información.
+    \item Analizar el efecto de la granularidad semanal, mensual y trimestral sobre la variabilidad de la serie y la precisión de los pronósticos.
+    \item Comparar modelos de referencia, ARIMA, Prophet, Random Forest, XGBoost y LSTM mediante una metodología común de validación temporal y métricas homogéneas.
+    \item Seleccionar y ajustar el modelo de mejor desempeño, y cuantificar su diferencia respecto del pronóstico del CRM mediante WAPE y métricas complementarias.
+    \item Generar proyecciones trimestrales agregadas, trazables e interpretables que puedan utilizarse como apoyo en la planificación financiera.
 \end{itemize}
 
 %----------------------------------------------------------------------------------------
 
 \section{Alcance del proyecto}
 
-El trabajo comprende el desarrollo completo de un prototipo funcional que permita validar la factibilidad técnica y el valor práctico del enfoque. En particular, el alcance incluye:
+El trabajo comprendió el desarrollo de un prototipo funcional orientado a demostrar la factibilidad técnica y el valor práctico del enfoque. El alcance incluyó:
 
 \begin{itemize}
-    \item La recopilación, limpieza y estandarización de los \textit{snapshots} históricos exportados desde el CRM.
-    \item El diseño e implementación del \textit{pipeline} de datos, contemplando las etapas de extracción y consolidación, preprocesamiento, \textit{feature engineering}, entrenamiento, validación y comparación de modelos, y generación de proyecciones.
-    \item La documentación técnica y metodológica del proceso, incluyendo la justificación de las decisiones de modelado y las métricas de evaluación empleadas.
-    \item La presentación de los resultados mediante reportes visuales que faciliten su interpretación por parte del área de negocio.
+    \item La carga y validación de archivos históricos exportados desde el CRM.
+    \item La limpieza, tipificación y consolidación de los snapshots, junto con la construcción de una tabla mensual de modelado.
+    \item La definición de las contrataciones a partir de oportunidades ganadas, deduplicadas y agregadas por fecha de cierre.
+    \item La generación de rezagos, estadísticas móviles y variables agregadas del estado del pipeline.
+    \item El entrenamiento, la validación temporal, la comparación y el ajuste de distintas familias de modelos.
+    \item El registro reproducible de experimentos y la exportación de proyecciones y métricas para su análisis.
+    \item La documentación de decisiones, limitaciones, resultados y hallazgos negativos relevantes.
 \end{itemize}
 
-Quedan explícitamente fuera del alcance el desarrollo de una interfaz de usuario final, la conexión en tiempo real con sistemas productivos o bases de datos corporativas, el despliegue operacional del modelo, y el modelado financiero posterior a las proyecciones (por ejemplo, la asignación de cuotas comerciales). Asimismo, el tratamiento de los datos se realizó sobre información debidamente anonimizada y agregada, en cumplimiento de las políticas de gobernanza de la organización, limitándose la difusión a resultados de alto nivel.
+Quedaron fuera del alcance la conexión en tiempo real con el CRM, el desarrollo de una interfaz de usuario, el despliegue productivo y el modelado financiero posterior a la proyección. Tampoco se realizó una segmentación geográfica, debido a que la fuente disponible no contenía una dimensión de región. El trabajo se efectuó dentro de la infraestructura autorizada por la organización. Para la documentación académica se utilizaron descripciones, métricas y resultados agregados, sin publicar nombres de clientes, contactos ni datos crudos que permitieran identificar personas u oportunidades comerciales.
 
 %----------------------------------------------------------------------------------------
 
 \section{Organización de la memoria}
 
-El resto de la memoria se organiza de la siguiente manera. En el capítulo~\ref{Chapter2} se presenta la introducción específica, que incluye el marco teórico y el estado del arte relevantes (series temporales, modelos de aprendizaje automático aplicados a la predicción de ventas y métricas de evaluación), así como una caracterización detallada del dominio y de los datos utilizados. En el capítulo~\ref{Chapter3} se describe el diseño y la implementación del \textit{pipeline} y de los modelos, junto con las principales decisiones de arquitectura. En el capítulo~\ref{Chapter4} se presentan los ensayos realizados y los resultados obtenidos, incluyendo la comparación entre los distintos modelos y la validación de las proyecciones. Finalmente, en el capítulo~\ref{Chapter5} se exponen las conclusiones del trabajo, sus limitaciones y las líneas de trabajo futuro.
+El resto de la memoria se organiza de la siguiente manera. En el capítulo~\ref{Chapter2} se presenta la introducción específica, que describe el conjunto de datos, las bibliotecas, los modelos y la infraestructura de cómputo utilizados. En el capítulo~\ref{Chapter3} se detalla el diseño y la implementación del pipeline, la construcción point in time del conjunto supervisado, la arquitectura de modelado y el proceso de entrenamiento. En el capítulo~\ref{Chapter4} se expone el plan de evaluación y se analizan los resultados, los errores y las limitaciones de los modelos. Finalmente, en el capítulo~\ref{Chapter5} se presentan los logros alcanzados, los conocimientos aplicados, las conclusiones y las posibles líneas de trabajo futuro.
