@@ -1,184 +1,198 @@
-\chapter{Introducción específica} % Main chapter title
+% Chapter 2
+
+\chapter{Introducción específica}
 
 \label{Chapter2}
 
-%----------------------------------------------------------------------------------------
-%	SECTION 1
-%----------------------------------------------------------------------------------------
-Todos los capítulos deben comenzar con un breve párrafo introductorio que indique cuál es el contenido que se encontrará al leerlo.  La redacción sobre el contenido de la memoria debe hacerse en presente y todo lo referido al proyecto en pasado, siempre de modo impersonal.
+En este capítulo se presentan los datos, los modelos, las métricas y los recursos tecnológicos utilizados en el trabajo. Primero se caracteriza la fuente histórica proveniente del sistema de gestión comercial y se describen sus variables, su calidad y sus limitaciones. Luego se define la salida esperada y se resumen los enfoques de pronóstico considerados. Finalmente, se detallan las métricas de evaluación, las bibliotecas y la infraestructura de cómputo.
 
-\section{Estilo y convenciones}
-\label{sec:ejemplo}
+\section{Conjunto de datos}
+\label{sec:conjuntoDatos}
 
-\subsection{Uso de mayúscula inicial para los título de secciones}
+La fuente principal de información fue una exportación histórica del CRM de una empresa del portafolio de OceanSound Partners. El archivo contenía fotografías sucesivas del embudo comercial. Cada fotografía, denominada \textit{snapshot}, registraba el estado conocido de las oportunidades en una fecha determinada. Una misma oportunidad podía aparecer en numerosos períodos consecutivos, por lo que la cantidad de filas no representaba la cantidad de operaciones independientes.
 
-Si en el texto se hace alusión a diferentes partes del trabajo referirse a ellas como capítulo, sección o subsección según corresponda. Por ejemplo: ``En el capítulo \ref{Chapter1} se explica tal cosa'', o ``En la sección \ref{sec:ejemplo} se presenta lo que sea'', o ``En la subsección \ref{subsec:ejemplo} se discute otra cosa''.
+La extracción reducida reunió 1 993 467 filas y 23 columnas, con un tamaño aproximado de 498 MB. El período observado se extendió desde el 8 de enero de 2024 hasta el 1 de junio de 2026 y comprendió 126 \textit{snapshots} separados por una cadencia exacta de siete días. En total se identificaron 24 828 oportunidades, 4.476 cuentas y 225 responsables comerciales. Cada oportunidad apareció, en promedio, en 80,29 fotografías.
 
-Cuando se quiere poner una lista tabulada, se hace así:
+La tabla~\ref{tab:resumenFuente} resume las principales dimensiones de la fuente.
 
-\begin{itemize}
-	\item Este es el primer elemento de la lista.
-	\item Este es el segundo elemento de la lista.
-\end{itemize}
-
-Notar el uso de las mayúsculas y el punto al final de cada elemento.
-
-Si se desea poner una lista numerada el formato es este:
-
-\begin{enumerate}
-	\item Este es el primer elemento de la lista.
-	\item Este es el segundo elemento de la lista.
-\end{enumerate}
-
-Notar el uso de las mayúsculas y el punto al final de cada elemento.
-
-\subsection{Este es el título de una subsección}
-\label{subsec:ejemplo}
-
-Se recomienda no utilizar \textbf{texto en negritas} en ningún párrafo, ni tampoco texto \underline{subrayado}. En cambio sí se debe utilizar \textit{texto en itálicas} para palabras en un idioma extranjero, al menos la primera vez que aparecen en el texto. En el caso de palabras que estamos inventando se deben utilizar ``comillas'', así como también para citas textuales. Por ejemplo, un \textit{digital filter} es una especie de ``selector'' que permite separar ciertos componentes armónicos en particular.
-
-La escritura debe ser impersonal. Por ejemplo, no utilizar ``el diseño del firmware lo hice de acuerdo con tal principio'', sino ``el firmware fue diseñado utilizando tal principio''. 
-
-El trabajo es algo que al momento de escribir la memoria se supone que ya está concluido, entonces todo lo que se refiera a hacer el trabajo se narra en tiempo pasado, porque es algo que ya ocurrió. Por ejemplo, "se diseñó el firmware empleando la técnica de test driven development".
-
-En cambio, la memoria es algo que está vivo cada vez que el lector la lee. Por eso transcurre siempre en tiempo presente, como por ejemplo:
-
-``En el presente capítulo se da una visión global sobre las distintas pruebas realizadas y los resultados obtenidos. Se explica el modo en que fueron llevados a cabo los test unitarios y las pruebas del sistema''.
-
-Se recomienda no utilizar una sección de glosario sino colocar la descripción de las abreviaturas como parte del mismo cuerpo del texto. Por ejemplo, RTOS (\textit{Real Time Operating System}, Sistema Operativo de Tiempo Real) o en caso de considerarlo apropiado mediante notas a pie de página.
-
-Si se desea indicar alguna página web utilizar el siguiente formato de referencias bibliográficas, dónde las referencias se detallan en la sección de bibliografía de la memoria, utilizado el formato establecido por IEEE en \citep{IEEE:citation}. Por ejemplo, ``el presente trabajo se basa en la plataforma EDU-CIAA-NXP \citep{CIAA}, la cual...''.
-
-\subsection{Figuras} 
-
-Al insertar figuras en la memoria se deben considerar determinadas pautas. Para empezar, usar siempre tipografía claramente legible. Luego, tener claro que \textbf{es incorrecto} escribir por ejemplo esto: ``El diseño elegido es un cuadrado, como se ve en la siguiente figura:''
-
-\begin{figure}[h]
-\centering
-\includegraphics[scale=.45]{./Figures/cuadradoAzul.png}
-\end{figure}
-
-La forma correcta de utilizar una figura es con referencias cruzadas, por ejemplo: ``Se eligió utilizar un cuadrado azul para el logo, como puede observarse en la figura \ref{fig:cuadradoAzul}''.
-
-\begin{figure}[ht]
-	\centering
-	\includegraphics[scale=.45]{./Figures/cuadradoAzul.png}
-	\caption{Ilustración del cuadrado azul que se eligió para el diseño del logo.}
-	\label{fig:cuadradoAzul}
-\end{figure}
-
-El texto de las figuras debe estar siempre en español, excepto que se decida reproducir una figura original tomada de alguna referencia. En ese caso la referencia de la cual se tomó la figura debe ser indicada en el epígrafe de la figura e incluida como una nota al pie, como se ilustra en la figura \ref{fig:palabraIngles}.
-
-\begin{figure}[htpb]
-	\centering
-	\includegraphics[scale=.3]{./Figures/word.jpeg}
-	\caption{Imagen tomada de la página oficial del procesador\protect\footnotemark.}
-	\label{fig:palabraIngles}
-\end{figure}
-
-\footnotetext{Imagen tomada de \url{https://goo.gl/images/i7C70w}}
-
-La figura y el epígrafe deben conformar una unidad cuyo significado principal pueda ser comprendido por el lector sin necesidad de leer el cuerpo central de la memoria. Para eso es necesario que el epígrafe sea todo lo detallado que corresponda y si en la figura se utilizan abreviaturas entonces aclarar su significado en el epígrafe o en la misma figura.
-
-
-
-\begin{figure}[ht]
-	\centering
-	\includegraphics[scale=.37]{./Figures/questionMark.png}
-	\caption{¿Por qué de pronto aparece esta figura?}
-	\label{fig:questionMark}
-\end{figure}
-
-Nunca colocar una figura en el documento antes de hacer la primera referencia a ella, como se ilustra con la figura \ref{fig:questionMark}, porque sino el lector no comprenderá por qué de pronto aparece la figura en el documento, lo que distraerá su atención.
-
-Otra posibilidad es utilizar el entorno \textit{subfigure} para incluir más de una figura, como se puede ver en la figura \ref{fig:three graphs}. Notar que se pueden referenciar también las figuras internas individualmente de esta manera: \ref{fig:1de3}, \ref{fig:2de3} y \ref{fig:3de3}.
- 
-\begin{figure}[!htpb]
-     \centering
-     \begin{subfigure}[b]{0.3\textwidth}
-         \centering
-         \includegraphics[width=.65\textwidth]{./Figures/questionMark}
-         \caption{Un caption.}
-         \label{fig:1de3}
-     \end{subfigure}
-     \hfill
-     \begin{subfigure}[b]{0.3\textwidth}
-         \centering
-         \includegraphics[width=.65\textwidth]{./Figures/questionMark}
-         \caption{Otro.}
-         \label{fig:2de3}
-     \end{subfigure}
-     \hfill
-     \begin{subfigure}[b]{0.3\textwidth}
-         \centering
-         \includegraphics[width=.65\textwidth]{./Figures/questionMark}
-         \caption{Y otro más.}
-         \label{fig:3de3}
-     \end{subfigure}
-        \caption{Tres gráficos simples.}
-        \label{fig:three graphs}
-\end{figure}
-
-El código para generar las imágenes se encuentra disponible para su reutilización en el archivo \file{Chapter2.tex}.
-
-\subsection{Tablas}
-
-Para las tablas utilizar el mismo formato que para las figuras, sólo que el epígrafe se debe colocar arriba de la tabla, como se ilustra en la tabla \ref{tab:peces}. Observar que sólo algunas filas van con líneas visibles y notar el uso de las negritas para los encabezados.  La referencia se logra utilizando el comando \verb|\ref{<label>}| donde label debe estar definida dentro del entorno de la tabla.
-
-\begin{verbatim}
-\begin{table}[h]
-	\centering
-	\caption[caption corto]{caption largo más descriptivo}
-	\begin{tabular}{l c c}    
-		\toprule
-		\textbf{Especie}     & \textbf{Tamaño} & \textbf{Valor}\\
-		\midrule
-		Amphiprion Ocellaris & 10 cm           & \$ 6.000 \\		
-		Hepatus Blue Tang    & 15 cm           & \$ 7.000 \\
-		Zebrasoma Xanthurus  & 12 cm           & \$ 6.800 \\
-		\bottomrule
-		\hline
-	\end{tabular}
-	\label{tab:peces}
-\end{table}
-\end{verbatim}
-
-
-\begin{table}[h]
-	\centering
-	\caption[caption corto]{caption largo más descriptivo.}
-	\begin{tabular}{l c c}    
-		\toprule
-		\textbf{Especie} 	 & \textbf{Tamaño} 		& \textbf{Valor}  \\
-		\midrule
-		Amphiprion Ocellaris & 10 cm 				& \$ 6.000 \\		
-		Hepatus Blue Tang	 & 15 cm				& \$ 7.000 \\
-		Zebrasoma Xanthurus	 & 12 cm				& \$ 6.800 \\
-		\bottomrule
-		\hline
-	\end{tabular}
-	\label{tab:peces}
+\begin{table}[ht]
+    \centering
+    \caption{Resumen del conjunto de datos utilizado en el trabajo.}
+    \label{tab:resumenFuente}
+    \small
+    \begin{tabular}{p{7.2cm} r}
+        \toprule
+        Propiedad & Valor \\
+        \midrule
+        Filas & 1 993 467 \\
+        Columnas & 23 \\
+        Tamaño aproximado del archivo & 498 MB \\
+        Fotografías semanales & 126 \\
+        Primera fecha observada & 8 de enero de 2024 \\
+        Última fecha observada & 1 de junio de 2026 \\
+        Oportunidades únicas & 24 828 \\
+        Cuentas únicas & 4 476 \\
+        Responsables comerciales únicos & 225 \\
+        Apariciones promedio por oportunidad & 80,29 \\
+        \bottomrule
+    \end{tabular}
 \end{table}
 
-En cada capítulo se debe reiniciar el número de conteo de las figuras y las tablas, por ejemplo, figura 2.1 o tabla 2.1, pero no se debe reiniciar el conteo en cada sección. Por suerte la plantilla se encarga de esto por nosotros.
+\subsection{Estructura y variables disponibles}
 
-\subsection{Ecuaciones}
-\label{sec:Ecuaciones}
+La fuente tuvo una estructura de panel longitudinal. La fecha de cada fotografía indicó el instante en el que la información se encontraba disponible y el identificador de oportunidad permitió seguir una misma operación a lo largo del tiempo. Las columnas restantes describieron el estado comercial, las fechas relevantes, los montos, la probabilidad de cierre, la categoría de pronóstico y los responsables asociados.
 
-Al insertar ecuaciones en la memoria dentro de un entorno \textit{equation}, éstas se numeran en forma automática  y se pueden referir al igual que como se hace con las figuras y tablas, por ejemplo ver la ecuación \ref{eq:metric}.
+Las variables monetarias incluyeron el valor contractual anual, los servicios profesionales y los componentes de equipamiento o licencias. También se dispuso del monto total de la oportunidad, de componentes esperados y del ingreso esperado registrado por el CRM. Los importes ya se encontraban expresados en dólares estadounidenses, por lo que no fue necesario realizar conversiones monetarias.
+
+El estado de una oportunidad se representó mediante indicadores de cierre y resultado. Estos campos se consideraron más confiables que el nombre textual de la etapa, porque este último presentaba variantes semánticas e inconsistencias. La fecha prevista de cierre, la fecha de creación, la procedencia del contacto, el tipo de oportunidad y la categoría del pronóstico completaron la descripción comercial disponible.
+
+La fuente contenía información suficiente para observar dos aspectos diferentes. Por una parte, permitía reconstruir el volumen y la valoración de las oportunidades que se encontraban abiertas en una fecha. Por otra, permitía identificar las operaciones que finalmente habían sido ganadas y asignarlas a su fecha efectiva de cierre. La forma en que ambas perspectivas se consolidaron sin duplicaciones ni uso de información futura se explica en el capítulo~\ref{Chapter3}.
+
+\subsection{Contrataciones históricas}
+
+El monto contratado se definió como la suma del valor contractual anual, los servicios profesionales y los componentes de equipamiento o licencias de las oportunidades ganadas. Se comprobó que esta suma coincidía con el monto total registrado, con una tolerancia de un dólar, para la totalidad de las operaciones consolidadas.
+
+La historia disponible comprendió 11.983 oportunidades ganadas con fechas de cierre entre el 3 de enero de 2023 y el 29 de mayo de 2026. El monto acumulado fue de USD 186.782.760. Los servicios profesionales representaron el 73,3 por ciento, el valor contractual anual el 17,7 por ciento y los componentes de equipamiento o licencias el 9,0 por ciento restante. Esta composición mostró que la mayor parte del volumen provenía de servicios, aunque se preservó el desglose para facilitar su análisis posterior.
+
+La cantidad de operaciones y sus montos variaron de manera considerable entre períodos. Un conjunto reducido de oportunidades de valor elevado podía modificar el total de un mes. Por este motivo, el análisis debía considerar tanto el error monetario como el error relativo y no podía apoyarse únicamente en el porcentaje de aciertos individuales.
+
+\subsection{Calidad, limitaciones y confidencialidad}
+
+La calidad general de las variables centrales resultó adecuada. Los valores faltantes se concentraron principalmente en la procedencia del contacto, con un 2,36 por ciento. Los identificadores de responsable y el tipo de oportunidad presentaron proporciones inferiores al 0,15 por ciento. También se detectaron 66 filas sin contenido útil en los campos principales.
+
+La principal limitación fue la longitud temporal efectiva. Los casi dos millones de registros correspondían a repeticiones de oportunidades observadas durante menos de dos años y medio. En consecuencia, la cantidad de ejemplos útiles para comparar pronósticos temporales fue mucho menor que el número de filas originales. Esta característica condicionó la complejidad admisible de los modelos y la solidez de las estimaciones sobre períodos recientes.
+
+Los últimos meses presentaron además censura por la derecha. Algunas oportunidades continuaban abiertas al momento de realizar la extracción y todavía podían cambiar de estado. La fuente tampoco incluyó una variable de región, por lo que no permitió evaluar pronósticos geográficos sin incorporar información externa.
+
+Los datos crudos se procesaron dentro de la infraestructura autorizada por la organización y no se incorporaron al repositorio académico. La memoria utiliza únicamente conteos, proporciones, métricas y resultados agregados. No se publican nombres de personas, clientes u oportunidades, ni valores que permitan reconstruir una operación individual.
+
+\section{Salida esperada e información predictiva}
+\label{sec:salidaInformacion}
+
+La salida esperada es el monto total de contrataciones del trimestre siguiente a cada origen mensual. Si $B_{T+k}$ representa el monto contratado en el mes situado $k$ períodos después del origen $T$, el objetivo trimestral $q_T$ se expresa mediante la ecuación~\ref{eq:objetivoTrimestral}.
 
 \begin{equation}
-	\label{eq:metric}
-	ds^2 = c^2 dt^2 \left( \frac{d\sigma^2}{1-k\sigma^2} + \sigma^2\left[ d\theta^2 + \sin^2\theta d\phi^2 \right] \right)
+    \label{eq:objetivoTrimestral}
+    q_T = \sum_{k=1}^{3} B_{T+k}.
 \end{equation}
-                                                        
-Para generar la ecuación \ref{eq:metric} se utilizó el siguiente código:
 
-\begin{verbatim}
+Esta definición coincide con el horizonte utilizado por la planificación financiera y permite comparar la estimación automática con el pronóstico comercial. La observación de entrada representa la información disponible en el origen, mientras que la salida corresponde a los tres meses posteriores.
+
+La información predictiva se organizó en tres grupos conceptuales. El primero describió el embudo comercial abierto mediante la cantidad de oportunidades, su monto total, su valor ponderado por probabilidad y el ingreso esperado. El segundo representó la historia de las contrataciones mediante valores anteriores y resúmenes móviles. El tercero describió la posición temporal de cada observación dentro del año.
+
+\section{Modelos considerados}
+\label{sec:modelosConsiderados}
+
+El trabajo consideró modelos con diferentes supuestos y niveles de complejidad. Se incluyeron referencias simples para determinar si los métodos más elaborados aportaban una mejora real. Una referencia repitió el último valor observado y otra utilizó el valor correspondiente al mismo período del año anterior. El pronóstico ponderado del CRM se mantuvo como referencia de negocio.
+
+Entre los modelos de series temporales se utilizaron ARIMA y Prophet. ARIMA representó la dependencia histórica mediante componentes autorregresivos, de integración y de media móvil \citep{BoxJenkins2015}. Prophet aportó una formulación descomponible de tendencia y estacionalidad \citep{TaylorLetham2018}. Ambos métodos utilizaron la historia agregada de contrataciones como entrada.
+
+Los modelos tabulares fueron \textit{Random Forest} y XGBoost. El primero combinó múltiples árboles de regresión construidos con aleatoriedad en observaciones y variables \citep{Breiman2001}. El segundo utilizó árboles incorporados secuencialmente mediante \textit{boosting} y mecanismos de regularización \citep{ChenGuestrin2016}. Estos enfoques permitieron combinar la historia de contrataciones con variables agregadas del embudo comercial.
+
+También se incluyó una red recurrente LSTM (\textit{Long Short Term Memory}) como alternativa para representar dependencias temporales \citep{HochreiterSchmidhuber1997}. La diversidad de métodos permitió contrastar referencias de baja complejidad, modelos estadísticos, algoritmos de árboles y una red neuronal.
+
+La tabla~\ref{tab:modelosBibliotecas} resume las familias consideradas y sus implementaciones.
+
+\begin{table}[ht]
+    \centering
+    \caption{Familias de modelos y bibliotecas utilizadas.}
+    \label{tab:modelosBibliotecas}
+    \small
+    \begin{tabular}{p{3.4cm} p{3.9cm} p{4.9cm}}
+        \toprule
+        Familia & Implementación & Información principal \\
+        \midrule
+        Referencias simples & pandas y NumPy & Historia de contrataciones \\
+        Pronóstico del CRM & Estimador propio & Embudo comercial ponderado \\
+        ARIMA & statsmodels & Historia de contrataciones \\
+        Prophet & Prophet & Historia de contrataciones \\
+        Random Forest & scikit learn & Historia y embudo comercial \\
+        XGBoost & XGBoost & Historia y embudo comercial \\
+        LSTM & PyTorch & Secuencia de contrataciones \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\section{Métricas de evaluación}
+\label{sec:metricasEvaluacion}
+
+La evaluación utilizó métricas absolutas, cuadráticas, porcentuales y de ajuste. Para $n$ observaciones, donde $y_t$ es el monto real y $\hat{y}_t$ es el monto proyectado, el error absoluto medio o MAE (\textit{Mean Absolute Error}) y la raíz del error cuadrático medio o RMSE (\textit{Root Mean Squared Error}) se definen en las ecuaciones~\ref{eq:mae} y~\ref{eq:rmse}.
+
 \begin{equation}
-	\label{eq:metric}
-	ds^2 = c^2 dt^2 \left( \frac{d\sigma^2}{1-k\sigma^2} + 
-	\sigma^2\left[ d\theta^2 + 
-	\sin^2\theta d\phi^2 \right] \right)
+    \label{eq:mae}
+    \mathrm{MAE} = \frac{1}{n}\sum_{t=1}^{n}\left|y_t-\hat{y}_t\right|.
 \end{equation}
-\end{verbatim}
+
+\begin{equation}
+    \label{eq:rmse}
+    \mathrm{RMSE} = \sqrt{\frac{1}{n}\sum_{t=1}^{n}\left(y_t-\hat{y}_t\right)^2}.
+\end{equation}
+
+El MAE expresa el desvío promedio en unidades monetarias y mantiene una interpretación directa. El RMSE asigna mayor peso a los errores grandes debido al término cuadrático. Esta propiedad resulta útil cuando se desea identificar modelos sensibles a meses con desvíos extraordinarios.
+
+El error porcentual absoluto medio o MAPE (\textit{Mean Absolute Percentage Error}) expresa el error medio como porcentaje de cada observación, pero no se encuentra definido cuando el valor real es cero y puede crecer de manera desproporcionada ante valores pequeños \citep{HyndmanKoehler2006}. El error porcentual absoluto ponderado o WAPE (\textit{Weighted Absolute Percentage Error}) divide la suma de los errores absolutos por el volumen real acumulado. Ambas métricas se definen en las ecuaciones~\ref{eq:mape} y~\ref{eq:wapeChapter2}.
+
+\begin{equation}
+    \label{eq:mape}
+    \mathrm{MAPE} = \frac{100}{n}\sum_{t=1}^{n}\left|\frac{y_t-\hat{y}_t}{y_t}\right|.
+\end{equation}
+
+\begin{equation}
+    \label{eq:wapeChapter2}
+    \mathrm{WAPE} = 100\,\frac{\sum_{t=1}^{n}\left|y_t-\hat{y}_t\right|}
+    {\sum_{t=1}^{n}\left|y_t\right|}.
+\end{equation}
+
+El WAPE evita la división individual por valores nulos y pondera cada período de acuerdo con su aporte al total. Por esta razón fue la métrica principal del trabajo.
+
+El coeficiente de determinación $R^2$ complementó las métricas de error y se calculó mediante la ecuación~\ref{eq:coeficienteDeterminacion}.
+
+\begin{equation}
+    \label{eq:coeficienteDeterminacion}
+    R^2 = 1 - \frac{\sum_{t=1}^{n}\left(y_t-\hat{y}_t\right)^2}
+    {\sum_{t=1}^{n}\left(y_t-\bar{y}\right)^2},
+\end{equation}
+
+donde $\bar{y}$ representa el promedio de los valores reales. Un valor cercano a uno indica que el modelo representa una proporción elevada de la variabilidad observada. Un valor negativo señala que su desempeño es inferior al de una predicción constante basada en el promedio.
+
+\section{Entorno tecnológico}
+\label{sec:entornoTecnologico}
+
+El trabajo se desarrolló en Python 3.11. Pandas y NumPy se utilizaron para la lectura, la transformación tabular, las agregaciones temporales y los cálculos numéricos. PyArrow permitió almacenar las tablas procesadas en un formato columnar y Pandera se empleó para declarar controles sobre el esquema de entrada.
+
+scikit learn proporcionó los modelos y contratos comunes de aprendizaje automático. XGBoost se utilizó para el modelo de \textit{boosting}, statsmodels para ARIMA, Prophet para el modelo descomponible y PyTorch para la red LSTM. MLflow permitió registrar los parámetros y las métricas de los experimentos en una base SQLite local.
+
+Matplotlib y Seaborn se utilizaron para producir gráficos. Joblib permitió serializar el modelo seleccionado y un archivo JSON conservó sus metadatos. Pytest se empleó para las pruebas automatizadas y Ruff para el control estático del código. La tabla~\ref{tab:entornoTecnologico} resume el propósito de las herramientas principales.
+
+\begin{table}[ht]
+    \centering
+    \caption{Herramientas principales del entorno tecnológico.}
+    \label{tab:entornoTecnologico}
+    \small
+    \begin{tabular}{p{4cm} p{8.5cm}}
+        \toprule
+        Herramienta & Uso dentro del trabajo \\
+        \midrule
+        Python, pandas y NumPy & Procesamiento tabular y cálculo numérico \\
+        PyArrow y Pandera & Persistencia columnar y validación del esquema \\
+        scikit learn y XGBoost & Modelos tabulares \\
+        statsmodels y Prophet & Modelos de series temporales \\
+        PyTorch & Red neuronal recurrente \\
+        MLflow y SQLite & Registro local de experimentos \\
+        Matplotlib y Seaborn & Generación de gráficos \\
+        Joblib y JSON & Persistencia del modelo y sus metadatos \\
+        pytest y Ruff & Pruebas automatizadas y control estático \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+La organización interna del código, la secuencia de procesamiento y los mecanismos de persistencia forman parte de la implementación. Por ese motivo, se desarrollan en el capítulo~\ref{Chapter3} y no se detallan en esta introducción específica.
+
+\section{Infraestructura de cómputo}
+\label{sec:infraestructuraComputo}
+
+El desarrollo y los experimentos se ejecutaron de forma local sobre un equipo con arquitectura Apple Silicon y 24 GiB de memoria. Los modelos basados en árboles y los métodos estadísticos utilizaron el procesador central. La implementación de LSTM pudo aprovechar la aceleración provista por \textit{Metal Performance Shaders} cuando ese recurso se encontraba disponible.
+
+Después de optimizar los tipos de datos, la tabla cargada ocupó aproximadamente 228 MB de memoria. El volumen de la extracción pudo procesarse sin infraestructura distribuida ni servicios externos de cómputo. Este entorno fue suficiente para el desarrollo y la evaluación del prototipo.
+
+El alcance no incluyó un servicio de inferencia, una interfaz de usuario ni una conexión directa con el CRM. Las salidas del trabajo consistieron en archivos de proyección, métricas, figuras y un modelo serializado. En consecuencia, la infraestructura descrita corresponde a un entorno de desarrollo y evaluación. 

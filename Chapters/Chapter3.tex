@@ -1,94 +1,185 @@
-\chapter{Diseño e implementación} % Main chapter title
+% Chapter 3
 
-\label{Chapter3} % Change X to a consecutive number; for referencing this chapter elsewhere, use \ref{ChapterX}
+\chapter{Diseño e implementación}
 
-Todos los capítulos deben comenzar con un breve párrafo introductorio que indique cuál es el contenido que se encontrará al leerlo.  La redacción sobre el contenido de la memoria debe hacerse en presente y todo lo referido al proyecto en pasado, siempre de modo impersonal.
+\label{Chapter3}
 
-\definecolor{mygreen}{rgb}{0,0.6,0}
-\definecolor{mygray}{rgb}{0.5,0.5,0.5}
-\definecolor{mymauve}{rgb}{0.58,0,0.82}
+En este capítulo se describe el diseño adoptado para transformar las fotografías históricas del CRM en una proyección del monto de contrataciones del trimestre siguiente. Primero se presenta la arquitectura del sistema y la secuencia general de procesamiento. Luego se explican la carga y validación de los datos, la consolidación temporal, la construcción de variables y la preparación del problema supervisado. Finalmente, se detallan la implementación de los modelos, el procedimiento de validación, el registro de experimentos, la generación de artefactos y las pruebas utilizadas para verificar la corrección del sistema. Los resultados cuantitativos de estas decisiones se reservan para el capítulo~\ref{Chapter4}.
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% parámetros para configurar el formato del código en los entornos lstlisting
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\lstset{ %
-  backgroundcolor=\color{white},   % choose the background color; you must add \usepackage{color} or \usepackage{xcolor}
-  basicstyle=\footnotesize,        % the size of the fonts that are used for the code
-  breakatwhitespace=false,         % sets if automatic breaks should only happen at whitespace
-  breaklines=true,                 % sets automatic line breaking
-  captionpos=b,                    % sets the caption-position to bottom
-  commentstyle=\color{mygreen},    % comment style
-  deletekeywords={...},            % if you want to delete keywords from the given language
-  %escapeinside={\%*}{*)},          % if you want to add LaTeX within your code
-  %extendedchars=true,              % lets you use non-ASCII characters; for 8-bits encodings only, does not work with UTF-8
-  %frame=single,	                % adds a frame around the code
-  keepspaces=true,                 % keeps spaces in text, useful for keeping indentation of code (possibly needs columns=flexible)
-  keywordstyle=\color{blue},       % keyword style
-  language=[ANSI]C,                % the language of the code
-  %otherkeywords={*,...},           % if you want to add more keywords to the set
-  numbers=left,                    % where to put the line-numbers; possible values are (none, left, right)
-  numbersep=5pt,                   % how far the line-numbers are from the code
-  numberstyle=\tiny\color{mygray}, % the style that is used for the line-numbers
-  rulecolor=\color{black},         % if not set, the frame-color may be changed on line-breaks within not-black text (e.g. comments (green here))
-  showspaces=false,                % show spaces everywhere adding particular underscores; it overrides 'showstringspaces'
-  showstringspaces=false,          % underline spaces within strings only
-  showtabs=false,                  % show tabs within strings adding particular underscores
-  stepnumber=1,                    % the step between two line-numbers. If it's 1, each line will be numbered
-  stringstyle=\color{mymauve},     % string literal style
-  tabsize=2,	                   % sets default tabsize to 2 spaces
-  title=\lstname,                  % show the filename of files included with \lstinputlisting; also try caption instead of title
-  morecomment=[s]{/*}{*/}
-}
+\section{Arquitectura del sistema}
+\label{sec:arquitecturaSistema}
 
+La solución se implementó como un paquete de Python organizado por responsabilidades. Esta separación permitió reutilizar la misma lógica desde los cuadernos de análisis, los programas ejecutables y las pruebas automatizadas. También evitó que la preparación de datos, el entrenamiento y la generación de informes dependieran de implementaciones duplicadas.
 
-%----------------------------------------------------------------------------------------
-%	SECTION 1
-%----------------------------------------------------------------------------------------
-\section{Análisis del software}
- 
-La idea de esta sección es resaltar los problemas encontrados, los criterios utilizados y la justificación de las decisiones que se hayan tomado.
+La configuración central se concentró en un único módulo. Allí se declararon las rutas, los nombres de las columnas, los componentes monetarios, las variables que podían producir fuga de información y los parámetros temporales predeterminados. De esta manera, una modificación del esquema o del horizonte no requirió cambios dispersos en diferentes partes del código.
 
-Se puede agregar código o pseudocódigo dentro de un entorno lstlisting con el siguiente código:
+La tabla~\ref{tab:arquitecturaModulos} resume las capas principales de la implementación.
 
-\begin{verbatim}
-\begin{lstlisting}[caption= "un epígrafe descriptivo"]
-	las líneas de código irían aquí...
-\end{lstlisting}
-\end{verbatim}
+\begin{table}[ht]
+    \centering
+    \caption{Organización funcional del sistema implementado.}
+    \label{tab:arquitecturaModulos}
+    \small
+    \begin{tabular}{p{3.2cm} p{3.4cm} p{5.1cm}}
+        \toprule
+        Responsabilidad & Módulos principales & Función \\
+        \midrule
+        Configuración & \texttt{config.py} & Centralización de rutas, columnas y reglas temporales \\
+        Ingesta & \texttt{ingestion} & Lectura, tipado, validación y consolidación de fotografías \\
+        Construcción de variables & \texttt{features} & Agregación mensual, rezagos, ventanas móviles y objetivo trimestral \\
+        Modelos & \texttt{models} & Registro de referencias, modelos estadísticos, árboles y red recurrente \\
+        Validación y entrenamiento & \texttt{validation} y \texttt{training} & Particiones temporales, métricas, comparación y ajuste \\
+        Proyección & \texttt{projection} & Entrenamiento final y estimación del trimestre siguiente \\
+        Informes y persistencia & \texttt{reporting}, \texttt{tracking} y \texttt{serving} & Exportación, trazabilidad y almacenamiento del modelo \\
+        \bottomrule
+    \end{tabular}
+\end{table}
 
-A modo de ejemplo, se muestra el fragmento de código \ref{cod:vControl}:
+El flujo completo se expuso mediante seis programas ejecutables. El primero construyó la tabla de modelado. El segundo ejecutó la comparación mensual. El tercero realizó la comparación y la proyección trimestral. El cuarto ajustó hiperparámetros. El quinto produjo figuras y archivos para herramientas de inteligencia de negocios. El sexto entrenó y serializó el modelo destinado a la proyección. Esta secuencia permitió ejecutar cada etapa por separado y conservar resultados intermedios verificables.
 
-\begin{lstlisting}[label=cod:vControl,caption=Pseudocódigo del lazo principal de control.]  % Start your code-block
+\section{Ingesta y validación de los datos}
+\label{sec:ingestaValidacion}
 
-#define MAX_SENSOR_NUMBER 3
-#define MAX_ALARM_NUMBER  6
-#define MAX_ACTUATOR_NUMBER 6
+La entrada consistió en un archivo CSV exportado desde el CRM. La función de carga asignó tipos explícitos antes de construir las tablas analíticas. Los importes se representaron con variables numéricas de precisión doble, los identificadores y categorías se cargaron como variables categóricas, las fechas se interpretaron durante la lectura y los indicadores lógicos se convirtieron a un tipo booleano que admitía valores faltantes.
 
-uint32_t sensorValue[MAX_SENSOR_NUMBER];		
-FunctionalState alarmControl[MAX_ALARM_NUMBER];	//ENABLE or DISABLE
-state_t alarmState[MAX_ALARM_NUMBER];						//ON or OFF
-state_t actuatorState[MAX_ACTUATOR_NUMBER];			//ON or OFF
+Los nombres originales de las columnas incluían un sufijo agregado por el mecanismo de exportación. Ese sufijo se eliminó de manera uniforme después de la lectura. También se reconocieron como ausentes las representaciones textuales habituales de valores nulos. Por último, se descartaron las filas en las que el identificador, la etapa y los principales importes se encontraban simultáneamente vacíos. Esta regla eliminó registros sin contenido útil sin aplicar una imputación general sobre variables comerciales.
 
-void vControl() {
+La validación del esquema se implementó con Pandera. Se exigió la presencia de los identificadores y fechas indispensables, se controló que la probabilidad estuviera comprendida entre cero y cien y se rechazaron importes negativos. La categoría del pronóstico se restringió a los valores habilitados por el proceso comercial. El esquema aceptó columnas adicionales para que una ampliación no disruptiva de la exportación no interrumpiera el procesamiento. En cambio, una ausencia o una modificación incompatible de las variables centrales provocó un error temprano y detallado.
 
-	initGlobalVariables();
-	
-	period = 500 ms;
-		
-	while(1) {
+La validación se mantuvo como una opción de la función de carga. Esta decisión permitió activarla en ejecuciones de control y evitar su costo cuando se trabajaba con una fuente ya verificada. La importación de la biblioteca también se realizó de manera diferida, de modo que el núcleo de lectura pudiera utilizarse aun cuando el componente de validación no estuviera instalado.
 
-		ticks = xTaskGetTickCount();
-		
-		updateSensors();
-		
-		updateAlarms();
-		
-		controlActuators();
-		
-		vTaskDelayUntil(&ticks, period);
-	}
-}
-\end{lstlisting}
+\section{Consolidación temporal}
+\label{sec:consolidacionTemporal}
 
+El panel original contenía una fotografía por semana y repetía una misma oportunidad mientras permanecía registrada en el CRM. Para reducir la variabilidad de alta frecuencia se conservó la primera fotografía disponible de cada mes. Esta regla produjo un origen temporal mensual estable y mantuvo una relación directa con el horizonte de planificación trimestral.
 
+La consolidación separó dos perspectivas. La primera reconstruyó las contrataciones efectivas. La segunda describió el embudo comercial que seguía abierto en cada origen. Esta separación fue necesaria porque una oportunidad ganada contribuía a la variable objetivo una sola vez, mientras que una oportunidad abierta podía formar parte de las variables predictoras en varios orígenes consecutivos.
 
+Para construir las contrataciones se seleccionaron las oportunidades identificadas como ganadas por los indicadores del CRM. No se utilizó el texto de la etapa porque presentaba variantes semánticas. Luego se ordenaron los registros por fecha de fotografía y se conservó una sola fila por identificador de oportunidad. El monto individual $b_i$ se calculó mediante la ecuación~\ref{eq:montoContratacionImplementacion}.
+
+\begin{equation}
+    \label{eq:montoContratacionImplementacion}
+    b_i = \mathrm{ACV}_i + \mathrm{PS}_i + \mathrm{HWSW}_i.
+\end{equation}
+
+Los valores ausentes de cada componente se trataron como cero exclusivamente para esta suma. Las oportunidades sin fecha de cierre se excluyeron porque no podían asignarse a un período. Después de la deduplicación, los importes se agregaron por mes de cierre y se conservaron tanto el total como el desglose por tipo de ingreso.
+
+El embudo comercial se calculó de manera independiente para cada fotografía. Se consideró abierta una oportunidad cuyo indicador de cierre fuera falso. Sobre ese subconjunto se generaron la cantidad de oportunidades, el monto abierto, el ingreso esperado informado por el CRM y el monto ponderado por probabilidad. Para una fotografía tomada en $T$, este último se definió según la ecuación~\ref{eq:pipelinePonderado}.
+
+\begin{equation}
+    \label{eq:pipelinePonderado}
+    P_T = \sum_i A_{i,T}\frac{p_{i,T}}{100},
+\end{equation}
+
+donde la suma se extiende sobre las oportunidades abiertas en $T$, $A_{i,T}$ es el monto de la oportunidad y $p_{i,T}$ es la probabilidad registrada en esa fecha. Todas las cantidades se calcularon dentro de la fotografía correspondiente, sin reemplazar sus valores por estados observados posteriormente.
+
+También se implementó un conjunto experimental de variables más detalladas. Estas variables representaron la antigüedad media del embudo, el monto por categoría de confianza y el monto ponderado según los meses restantes hasta la fecha esperada de cierre. Su activación se controló mediante un parámetro y no formó parte del camino predeterminado. Esta separación permitió conservar la evidencia ejecutable de los ensayos sin aumentar la complejidad de la tabla utilizada habitualmente.
+
+\section{Construcción de la tabla de modelado}
+\label{sec:construccionTablaModelado}
+
+La tabla de modelado se indexó por fin de mes. En cada fila se combinaron las contrataciones del período, el estado del embudo disponible en el origen y las variables derivadas de la historia. La unión se realizó por índice temporal y no por identificador de oportunidad, ya que la unidad de análisis del modelo fue el período y no la operación individual.
+
+Las variables de calendario incluyeron año, mes y trimestre. El mes también se representó mediante las transformaciones seno y coseno de la ecuación~\ref{eq:codificacionCiclicaMes}. Esta codificación preservó la cercanía entre diciembre y enero, que se perdería al representar el mes solamente con un entero.
+
+\begin{equation}
+    \label{eq:codificacionCiclicaMes}
+    m_{\sin} = \sin\left(2\pi\frac{m}{12}\right),
+    \qquad
+    m_{\cos} = \cos\left(2\pi\frac{m}{12}\right).
+\end{equation}
+
+La historia de contrataciones se incorporó mediante rezagos de uno, dos, tres y doce períodos. Los tres primeros representaron el comportamiento reciente y el último aportó una referencia anual. Se calcularon además medias móviles de tres y doce meses y tasas de variación sobre las mismas ventanas. Los cocientes infinitos producidos por una base igual a cero se reemplazaron por valores ausentes antes de construir el conjunto supervisado.
+
+Las columnas correspondientes a la contratación total y a su desglose no se incluyeron directamente entre las entradas. Solo se utilizaron sus valores retrasados o resumidos hasta el origen. También se excluyeron de manera explícita la fecha efectiva de cierre y los indicadores de oportunidad cerrada o ganada. Estas reglas impidieron que el modelo utilizara el resultado que debía predecir.
+
+La tabla resultante pudo persistirse en formato Parquet o CSV. Parquet se utilizó como formato predeterminado por su representación columnar y por la conservación de tipos. La alternativa CSV se mantuvo para inspecciones manuales y para facilitar el intercambio con otras herramientas.
+
+\section{Formulación supervisada del trimestre siguiente}
+\label{sec:formulacionSupervisadaTrimestre}
+
+El objetivo operativo fue la suma de las contrataciones de los tres meses posteriores a cada origen, definida en la ecuación~\ref{eq:objetivoTrimestral}. Para los modelos tabulares se adoptó una formulación directa. Cada fila de variables observadas en $T$ se emparejó con un único valor $q_T$ correspondiente al trimestre futuro completo. De esta manera, el modelo no necesitó predecir un mes, incorporarlo como entrada y repetir el procedimiento de forma recursiva.
+
+La preparación descartó los orígenes sin historia suficiente para calcular todos los rezagos y ventanas. También eliminó los últimos orígenes, cuyo trimestre futuro no se encontraba completamente observado. Además, se excluyeron dos orígenes recientes afectados por censura, debido a que las oportunidades correspondientes todavía podían cambiar de estado en la fuente.
+
+La construcción de $q_T$ se realizó mediante desplazamientos hacia el futuro aplicados únicamente a la variable de salida. Las variables de entrada conservaron el índice del origen. Esta distinción quedó encapsulada en una estructura que devolvió la tabla completa, la matriz de entrada y el vector objetivo. Así se utilizó la misma alineación durante el ajuste, la comparación y la proyección.
+
+Para los modelos de series temporales se conservó la serie mensual de contrataciones. En cada origen se pronosticaron los tres meses siguientes y se sumaron sus valores. Por lo tanto, los modelos tabulares y los modelos de serie resolvieron el mismo objetivo trimestral mediante estrategias compatibles, aunque con mecanismos de estimación diferentes.
+
+\section{Implementación de los modelos}
+\label{sec:implementacionModelos}
+
+Los modelos se registraron bajo dos contratos comunes. Los modelos tabulares se construyeron mediante fábricas que devolvían objetos con métodos de ajuste y predicción. Los modelos de serie se representaron mediante funciones que recibían la historia disponible y devolvían el pronóstico del horizonte solicitado. Esta interfaz permitió que el procedimiento de evaluación recorriera familias heterogéneas sin incorporar lógica específica para cada biblioteca.
+
+Se implementaron dos referencias simples. La primera repitió el último valor observado para cada mes del horizonte. La segunda utilizó los valores correspondientes a los mismos meses del ciclo anual anterior. La referencia del CRM se modeló a partir del monto abierto ponderado por probabilidad. Sobre cada ventana de entrenamiento se estimó un factor de calibración $\alpha$ sin intercepto, como se muestra en la ecuación~\ref{eq:calibracionCRM}.
+
+\begin{equation}
+    \label{eq:calibracionCRM}
+    \hat{q}_T^{\mathrm{CRM}} = \alpha P_T,
+    \qquad
+    \alpha = \frac{\sum_T P_T q_T}{\sum_T P_T^2}.
+\end{equation}
+
+El factor se recalculó dentro de cada ventana de entrenamiento. En consecuencia, la referencia no utilizó el valor real del período evaluado para ajustar su escala.
+
+Los modelos tabulares se implementaron mediante \textit{Random Forest} y XGBoost. Ambos recibieron las variables de calendario, los agregados del embudo y los resúmenes históricos. Los modelos ARIMA y Prophet operaron sobre la serie mensual agregada. ARIMA utilizó una especificación autorregresiva integrada de media móvil de orden $(1,1,1)$. Prophet se configuró con estacionalidad anual y sin estacionalidades semanal ni diaria, dado que la unidad de análisis fue mensual.
+
+La red LSTM utilizó una ventana equivalente a doce períodos, una capa recurrente y una capa lineal de salida. La serie se normalizó dentro de cada historia de entrenamiento y la predicción se transformó nuevamente a la escala monetaria. La implementación seleccionó CUDA, \textit{Metal Performance Shaders} o el procesador central según la disponibilidad. Como la red se implementó para un paso futuro, se incluyó en la comparación mensual y no en la comparación trimestral directa.
+
+Las dependencias de mayor tamaño se importaron solamente cuando el modelo correspondiente era requerido. Si una biblioteca opcional no se encontraba disponible, el registro omitía esa alternativa y permitía ejecutar el resto del flujo. Este comportamiento facilitó las pruebas parciales y evitó que una dependencia no esencial impidiera construir los datos o evaluar otros modelos.
+
+\section{Validación temporal y ajuste}
+\label{sec:validacionTemporalAjuste}
+
+La comparación se realizó mediante validación de ventana expansiva, denominada \textit{walk forward}. En cada origen se entrenó nuevamente el modelo con todas las observaciones anteriores y se generó una predicción para un período posterior. El origen evaluado nunca formó parte de su propio conjunto de entrenamiento. A medida que avanzó el tiempo, la ventana incorporó la información nueva sin descartar la historia previa.
+
+Se estableció el 1 de enero de 2026 como comienzo del conjunto de evaluación fuera de tiempo, denominado \textit{holdout}. Los orígenes anteriores se utilizaron para la validación cruzada temporal y los posteriores se reservaron para la evaluación final cuando contaban con un objetivo completo. El código incluyó además una regla de embargo igual al horizonte trimestral para formalizar la última fecha admisible de entrenamiento antes de un corte.
+
+Los modelos de serie requirieron un mínimo de doce meses de historia. Los modelos tabulares comenzaron con seis filas completas, porque los rezagos y las ventanas ya habían eliminado los orígenes sin información suficiente. Aunque los mínimos fueron diferentes, las métricas de cada comparación se calcularon sobre la intersección de fechas disponible para todos los modelos. Esta regla evitó favorecer una alternativa por haber sido evaluada sobre períodos distintos.
+
+La métrica principal fue WAPE, definida en la ecuación~\ref{eq:wapeChapter2}. También se calcularon MAE, RMSE, MAPE y $R^2$. Cada modelo produjo predicciones y valores reales separados entre validación temporal y evaluación fuera de tiempo. Cuando no existieron suficientes observaciones completas en esta última partición, el ordenamiento se apoyó en la validación temporal sin reemplazar los valores ausentes por estimaciones artificiales.
+
+El ajuste de hiperparámetros se realizó exclusivamente sobre los orígenes anteriores al corte. Para \textit{Random Forest} se exploraron combinaciones acotadas de profundidad, cantidad mínima de observaciones por hoja y cantidad de variables consideradas en cada división. Para XGBoost se variaron la profundidad, la tasa de aprendizaje y la cantidad de árboles. Se utilizó una búsqueda exhaustiva sobre grillas pequeñas para reducir el riesgo de adaptar en exceso la selección a una historia temporal corta. También se implementó una búsqueda aleatoria como alternativa reutilizable, aunque no formó parte del flujo principal. Todas las configuraciones se compararon mediante el mismo procedimiento expansivo y la misma métrica WAPE.
+
+\section{Trazabilidad y generación de artefactos}
+\label{sec:trazabilidadArtefactos}
+
+Los experimentos se registraron con MLflow sobre una base SQLite local. Para cada ejecución se almacenaron el nombre y la familia del modelo, la granularidad, los parámetros temporales, las métricas y el identificador del \textit{commit} de Git. Este último permitió vincular un resultado con el estado exacto del código que lo produjo.
+
+El registro se diseñó como una capacidad opcional. Si MLflow no se encontraba disponible o fallaba la conexión, el entrenamiento continuaba y conservaba los resultados en archivos CSV. Esta decisión evitó que una falla de observabilidad invalidara una ejecución computacionalmente costosa.
+
+La etapa de informes generó cuatro figuras: comparación de WAPE entre modelos, evolución histórica con la proyección, valores reales frente a valores estimados y composición de las contrataciones por tipo de ingreso. Los períodos afectados por censura se diferenciaron visualmente de los períodos completos. También se produjeron tres tablas en formato largo para su utilización en herramientas de inteligencia de negocios: historia de contrataciones, tabla comparativa de modelos y proyección del trimestre siguiente.
+
+Después de seleccionar una configuración, el entrenamiento final utilizó todas las observaciones admisibles. El estimador se almacenó con Joblib y se generó un archivo JSON con las columnas requeridas, la clase del modelo, la fecha de entrenamiento, los parámetros, la cantidad de filas y el origen de la proyección. El programa de entrenamiento final volvió a cargar el artefacto y comprobó que la predicción coincidiera con la obtenida antes de guardarlo.
+
+\section{Pruebas de la implementación}
+\label{sec:pruebasImplementacion}
+
+La batería automatizada se concentró en los invariantes que podían alterar la validez del análisis. El repositorio incluyó cuarenta y cinco casos de prueba al considerar las parametrizaciones. Las pruebas unitarias utilizaron tablas pequeñas y resultados conocidos para detectar errores que serían difíciles de identificar sobre el conjunto completo.
+
+La tabla~\ref{tab:pruebasImplementacion} resume las verificaciones principales.
+
+\begin{table}[ht]
+    \centering
+    \caption{Cobertura funcional de las pruebas automatizadas.}
+    \label{tab:pruebasImplementacion}
+    \small
+    \begin{tabular}{p{3.5cm} p{8.4cm}}
+        \toprule
+        Área & Invariante verificado \\
+        \midrule
+        Esquema de entrada & Rechazo de categorías inválidas, probabilidades fuera de rango e importes negativos \\
+        Consolidación & Conteo único de oportunidades ganadas y selección mensual correcta \\
+        Corrección temporal & Invariancia de una fotografía al agregar datos futuros y exclusión de columnas posteriores al cierre \\
+        Variables & Cálculo de rezagos, ventanas, tasas y alineación estrictamente futura del objetivo \\
+        Validación & Ventana expansiva sin superposición y separación correcta del corte temporal \\
+        Comparación & Uso de fechas comunes para las métricas y ordenamiento consistente de alternativas \\
+        Proyección & Suma correcta del trimestre futuro y tratamiento de los orígenes censurados \\
+        Persistencia & Equivalencia de las predicciones antes y después de guardar el modelo \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+La corrección \textit{point in time} recibió pruebas específicas. Una de ellas calculó las variables de una fotografía con el panel completo y volvió a calcularlas después de eliminar todas las observaciones futuras. Ambos resultados debían coincidir. Otras pruebas verificaron que una entrada en $T$ se asociara siempre con una salida posterior, que las columnas de resultado no aparecieran entre las variables predictoras y que el entrenamiento de cada origen terminara antes de la observación evaluada.
+
+En síntesis, la implementación convirtió un panel semanal con oportunidades repetidas en una tabla mensual apta para pronosticar el trimestre siguiente. La separación entre ingesta, variables, modelos, validación y persistencia permitió aplicar las mismas reglas temporales en todas las alternativas. La formulación directa, la evaluación expansiva y las pruebas contra fuga de información proporcionaron una base reproducible para los ensayos que se presentan en el capítulo~\ref{Chapter4}.
